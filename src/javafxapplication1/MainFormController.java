@@ -1,6 +1,7 @@
 package javafxapplication1;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -20,6 +21,7 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -28,6 +30,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -35,6 +38,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.GridPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -128,6 +132,45 @@ public class MainFormController implements Initializable {
     @FXML
     private ComboBox<String> inventory_status;
 
+    @FXML
+    private AnchorPane menu_form;
+
+    @FXML
+    private ScrollPane menu_scrollPane;
+
+    @FXML
+    private GridPane menu_gridPane;
+
+    @FXML
+    private TableView<?> menu_tableView;
+
+    @FXML
+    private TableColumn<?, ?> menu_col_productName;
+
+    @FXML
+    private TableColumn<?, ?> menu_col_quantity;
+
+    @FXML
+    private TableColumn<?, ?> menu_col_price;
+
+    @FXML
+    private Label menu_total;
+
+    @FXML
+    private TextField menu_amount;
+
+    @FXML
+    private Label menu_change;
+
+    @FXML
+    private Button menu_payBtn;
+
+    @FXML
+    private Button menu_removeBtn;
+
+    @FXML
+    private Button menu_receiptBtn;
+
     private Alert alert;
     private Connection con;
     private PreparedStatement pst;
@@ -135,6 +178,8 @@ public class MainFormController implements Initializable {
     private ResultSet rs;
 
     private Image image;
+
+    private ObservableList<ProductData> cardListData = FXCollections.observableArrayList();
 
     public void inventoryAddBtn() {
         if (inventory_productID.getText().isEmpty()
@@ -212,7 +257,7 @@ public class MainFormController implements Initializable {
         } else {
             String path = Data.path;
             path = path.replace("\\", "\\\\");
-            
+
             String updateQuery = "update product set ";
             updateQuery += "pro_id=" + "'" + inventory_productID.getText() + "',";
             updateQuery += "pro_name=" + "'" + inventory_productName.getText() + "',";
@@ -222,7 +267,7 @@ public class MainFormController implements Initializable {
             updateQuery += "status=" + "'" + inventory_status.getSelectionModel().getSelectedItem() + "',";
             updateQuery += "image=" + "'" + path + "',";
             updateQuery += "date=" + "'" + Data.date + "' ";
-            updateQuery += "where id="+ Data.id+";";
+            updateQuery += "where id=" + Data.id + ";";
 
             try {
                 alert = new Alert(AlertType.CONFIRMATION);
@@ -235,7 +280,7 @@ public class MainFormController implements Initializable {
                     con = Database.connect();
                     pst = con.prepareStatement(updateQuery);
                     pst.executeUpdate();
-                    
+
                     alert = new Alert(AlertType.INFORMATION);
                     alert.setTitle("Information Message");
                     alert.setHeaderText(null);
@@ -259,6 +304,48 @@ public class MainFormController implements Initializable {
 
         }
 
+    }
+
+    public void inventoryDeleBtn() {
+        if (inventory_productID.getText().isEmpty()) {
+
+            alert = new Alert(AlertType.ERROR);
+            alert.setHeaderText(null);
+            alert.setContentText("selct data to delete");
+            alert.showAndWait();
+        } else {
+            alert = new Alert(AlertType.CONFIRMATION);
+            alert.setHeaderText(null);
+            alert.setContentText("Are you sure you want to delete Prouct ID: " + inventory_productID.getText());
+            Optional<ButtonType> option = alert.showAndWait();
+
+            if (option.get().equals(ButtonType.OK)) {
+                try {
+                    con = Database.connect();
+                    String deleteQuery = "delete from product where id=" + Data.id;
+
+                    pst = con.prepareStatement(deleteQuery);
+                    pst.executeUpdate();
+
+                    alert = new Alert(AlertType.ERROR);
+                    alert.setHeaderText(null);
+                    alert.setContentText("successfully deleted!");
+                    alert.showAndWait();
+
+                    //TO REFRESH THE DATA & CLEAR THE FIELDS
+                    inventoryShowData();
+                    inventoryClearBtn();
+
+                } catch (SQLException ex) {
+                    Logger.getLogger(MainFormController.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            } else {
+                alert = new Alert(AlertType.ERROR);
+                alert.setHeaderText(null);
+                alert.setContentText("cancelled!");
+                alert.showAndWait();
+            }
+        }
     }
 
     public void inventoryClearBtn() {
@@ -352,7 +439,7 @@ public class MainFormController implements Initializable {
         Data.date = String.valueOf(prodData.getDate());
         Data.id = prodData.getId();
 
-        Data.path=prodData.getImage();
+        Data.path = prodData.getImage();
         String path = "File:" + prodData.getImage();
         image = new Image(path, 118, 135, false, true);
         inventory_imageView.setImage(image);
@@ -374,6 +461,57 @@ public class MainFormController implements Initializable {
         typeL.addAll(Arrays.asList(statusList));
         ObservableList listData = FXCollections.observableArrayList(typeL);
         inventory_status.setItems(listData);
+    }
+
+    public ObservableList<ProductData> menuGetData() {
+        String sql = "select * from product";
+        ObservableList<ProductData> listData = FXCollections.observableArrayList();
+        try {
+            con = Database.connect();
+            pst = con.prepareStatement(sql);
+            rs = pst.executeQuery();
+
+            ProductData prod;
+            while (rs.next()) {
+                prod = new ProductData(rs.getInt("id"), rs.getString("pro_id"), rs.getString("pro_name"), rs.getDouble("price"), rs.getString("image"));
+                listData.add(prod);
+            }
+
+        } catch (SQLException ex) {
+            Logger.getLogger(MainFormController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return listData;
+    }
+
+    public void menuDisplayCard() {
+        cardListData.clear();
+        cardListData.addAll(menuGetData());
+
+        int row = 0;
+        int column = 0;
+
+        menu_gridPane.getRowConstraints().clear();
+        menu_gridPane.getColumnConstraints().clear();
+        
+        for (int a = 0; a < cardListData.size(); a++) {
+            FXMLLoader load = new FXMLLoader();
+            load.setLocation(getClass().getResource("CardProduct.fxml"));
+            try {
+                AnchorPane pane = load.load();
+                CardProductController prodD = load.getController();
+                prodD.setData(cardListData.get(a));
+
+                if (column == 3) {
+                    column = 0;
+                    row += 1;
+                }
+                menu_gridPane.add(pane, column++, row);
+                
+            } catch (IOException ex) {
+                Logger.getLogger(MainFormController.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
+        }
     }
 
     //"Logout" BTN
@@ -412,9 +550,12 @@ public class MainFormController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         displayUsereName();
+        
         inventoryTypeLis();
         inventoryStatusLis();
         inventoryShowData();
+        
+        menuDisplayCard();
     }
 
 }

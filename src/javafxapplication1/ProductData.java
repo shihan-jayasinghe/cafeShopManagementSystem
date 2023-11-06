@@ -29,7 +29,15 @@ public class ProductData {
         this.image = image;
         this.date = date;
     }
-
+    
+     public ProductData(Integer id, String pro_id, String pro_name,Double price,String image) {
+        this.id = id;
+        this.pro_id = pro_id;
+        this.pro_name = pro_name;
+        this.price = price;
+        this.image = image;
+     }
+    
     public Integer getId() {
         return id;
     }

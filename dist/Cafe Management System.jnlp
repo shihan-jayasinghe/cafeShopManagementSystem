@@ -8,7 +8,7 @@
   </information>
   <resources>
     <j2se version="1.6+" href="http://java.sun.com/products/autodl/j2se"/>
-    <jar href="Cafe_Management_System.jar" size="22068" download="eager" />
+    <jar href="Cafe_Management_System.jar" size="25958" download="eager" />
     <jar href="lib\fontawesomefx-8.9.jar" size="571068" download="eager" />
     <jar href="lib\mysql-connector-java-8.0.30.jar" size="2513563" download="eager" />
   </resources>
