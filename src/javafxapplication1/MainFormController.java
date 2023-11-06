@@ -203,20 +203,60 @@ public class MainFormController implements Initializable {
                 || inventory_stock.getText().isEmpty()
                 || inventory_price.getText().isEmpty()
                 || inventory_status == null
-                || Data.path == null) {
+                || Data.path == null || Data.id == 0) {
 
             alert = new Alert(AlertType.ERROR);
             alert.setHeaderText(null);
             alert.setContentText("Please fill all blank fields");
             alert.showAndWait();
         } else {
-            String updateQuery = "update product set";
-            updateQuery = updateQuery = "pro_id=" + "'" + inventory_productID.getText() + "'";
-            updateQuery = updateQuery = "pro_name=" + "'" + inventory_productName.getText() + "'";
-            updateQuery = updateQuery = "type=" + "'" + inventory_type.getSelectionModel().getSelectedItem() + "'";
-            updateQuery = updateQuery = "stock=" + "'" + inventory_stock.getText() + "'";
-            updateQuery = updateQuery = "price=" + "'" + inventory_price.getText() + "'";
-            updateQuery = updateQuery = "status=" + "'" + inventory_status.getSelectionModel().getSelectedItem() + "'";
+            String path = Data.path;
+            path = path.replace("\\", "\\\\");
+
+            String updateQuery = "update product set ";
+            updateQuery += "pro_id=" + "'" + inventory_productID.getText() + "',";
+            updateQuery += "pro_name=" + "'" + inventory_productName.getText() + "',";
+            updateQuery += "type=" + "'" + inventory_type.getSelectionModel().getSelectedItem() + "',";
+            updateQuery += "stock=" + "'" + inventory_stock.getText() + "',";
+            updateQuery += "price=" + "'" + inventory_price.getText() + "',";
+            updateQuery += "status=" + "'" + inventory_status.getSelectionModel().getSelectedItem() + "',";
+            updateQuery += "image=" + "'" + path + "',";
+            updateQuery += "date=" + "'" + Data.date + "' ";
+            updateQuery += "where id="+ Data.id+";";
+            System.out.println(updateQuery);
+
+            try {
+                alert = new Alert(AlertType.ERROR);
+                alert.setTitle("Error Message");
+                alert.setHeaderText(null);
+                alert.setContentText("Are you sure you want to update Product ID: " + inventory_productID.getText() + "?");
+                Optional<ButtonType> option = alert.showAndWait();
+
+                if (option.get().equals(ButtonType.OK)) {
+                    con = Database.connect();
+                    pst = con.prepareStatement(updateQuery);
+                    pst.executeUpdate();
+
+                    alert = new Alert(AlertType.INFORMATION);
+                    alert.setTitle("Information Message");
+                    alert.setHeaderText(null);
+                    alert.setContentText("Successfully updated");
+                    alert.showAndWait();
+
+                    //TO REFRESH THE DATA & CLEAR THE FIELDS
+                    inventoryShowData();
+                    inventoryClearBtn();
+                } else {
+                    alert = new Alert(AlertType.ERROR);
+                    alert.setTitle("Error Message");
+                    alert.setHeaderText(null);
+                    alert.setContentText("Cancelled");
+                    alert.showAndWait();
+                }
+
+            } catch (SQLException ex) {
+                Logger.getLogger(MainFormController.class.getName()).log(Level.SEVERE, null, ex);
+            }
 
         }
 
@@ -230,7 +270,7 @@ public class MainFormController implements Initializable {
         inventory_price.setText("");
         inventory_status.getSelectionModel().clearSelection();
         Data.path = "";
-        Data.id=0;
+        Data.id = 0;
         inventory_imageView.setImage(null);
     }
 
@@ -309,10 +349,10 @@ public class MainFormController implements Initializable {
         inventory_productName.setText(prodData.getPro_name());
         inventory_stock.setText(String.valueOf(prodData.getStock()));
         inventory_price.setText(String.valueOf(prodData.getPrice()));
-        
-        Data.date=String.valueOf(prodData.getDate());
-        Data.id=prodData.getId();
-        
+
+        Data.date = String.valueOf(prodData.getDate());
+        Data.id = prodData.getId();
+
         Data.path = "File:" + prodData.getImage();
         image = new Image(Data.path, 118, 135, false, true);
         inventory_imageView.setImage(image);
