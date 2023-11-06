@@ -1,0 +1,68 @@
+/*
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+*/
+/* 
+    Created on : Oct 26, 2023, 11:34:15 AM
+    Author     : SHIHAN
+*/
+
+.gradient
+{
+  -fx-background-color: linear-gradient(to bottom right,#126988,#266156);
+}
+
+.white-form
+{
+   -fx-background-color: #fff;
+}
+
+.login-label
+{
+    -fx-border-color: #266156;
+    -fx-border-width: 0 0 0 3px;
+    -fx-padding: 0 0 0 5px;
+}
+
+.login-btn
+{
+    -fx-background-color: linear-gradient(to bottom right, #15885D, #126988);
+    -fx-background-radius: 5px;
+    -fx-text-fill: #fff;
+    -fx-font-size: 14px;
+    -fx-font-weight:bold;
+    -fx-cursor: hand;
+}
+
+.login-btn:hover
+{
+    -fx-background-color: linear-gradient(to bottom right, #1BBB78, #38A58F);
+}
+
+.text-feild
+{
+    -fx-background-color: transparent;
+    -fx-border-color: linear-gradient(to bottom right,#126988,#266156);
+    -fx-border-width: 0.8px;
+}
+
+.text-feild:focused
+{
+  -fx-border-width: 1.2px;  
+}
+
+.create-btn
+{
+    -fx-background-color: transparent;
+    -fx-text-fill: #fff;
+    -fx-font-weight:bold;
+    -fx-border-color: #fff;
+    -fx-border-width: 1px;
+}
+
+.create-btn:hover
+{
+    -fx-background-color: #fff; 
+    -fx-text-fill: #000;
+}
