@@ -212,7 +212,7 @@ public class MainFormController implements Initializable {
         } else {
             String path = Data.path;
             path = path.replace("\\", "\\\\");
-
+            
             String updateQuery = "update product set ";
             updateQuery += "pro_id=" + "'" + inventory_productID.getText() + "',";
             updateQuery += "pro_name=" + "'" + inventory_productName.getText() + "',";
@@ -223,10 +223,9 @@ public class MainFormController implements Initializable {
             updateQuery += "image=" + "'" + path + "',";
             updateQuery += "date=" + "'" + Data.date + "' ";
             updateQuery += "where id="+ Data.id+";";
-            System.out.println(updateQuery);
 
             try {
-                alert = new Alert(AlertType.ERROR);
+                alert = new Alert(AlertType.CONFIRMATION);
                 alert.setTitle("Error Message");
                 alert.setHeaderText(null);
                 alert.setContentText("Are you sure you want to update Product ID: " + inventory_productID.getText() + "?");
@@ -236,7 +235,7 @@ public class MainFormController implements Initializable {
                     con = Database.connect();
                     pst = con.prepareStatement(updateQuery);
                     pst.executeUpdate();
-
+                    
                     alert = new Alert(AlertType.INFORMATION);
                     alert.setTitle("Information Message");
                     alert.setHeaderText(null);
@@ -353,8 +352,9 @@ public class MainFormController implements Initializable {
         Data.date = String.valueOf(prodData.getDate());
         Data.id = prodData.getId();
 
-        Data.path = "File:" + prodData.getImage();
-        image = new Image(Data.path, 118, 135, false, true);
+        Data.path=prodData.getImage();
+        String path = "File:" + prodData.getImage();
+        image = new Image(path, 118, 135, false, true);
         inventory_imageView.setImage(image);
 
     }
