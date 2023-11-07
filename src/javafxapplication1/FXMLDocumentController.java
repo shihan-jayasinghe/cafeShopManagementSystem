@@ -36,6 +36,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import javafxapplication1.util.AlertProvider;
 import javafxapplication1.util.NowDate;
 
 /**
@@ -128,10 +129,7 @@ public class FXMLDocumentController implements Initializable {
         String pwd = id_password.getText();
 
         if (uname.isEmpty() || pwd.isEmpty()) {
-            alert = new Alert(AlertType.ERROR);
-            alert.setHeaderText(null);
-            alert.setContentText("Incorrect Username/Password");
-            alert.showAndWait();
+            AlertProvider.errorAlert("Incorrect Username/Password");
         } else {
             String query = "select uname,password from employee where uname=? and password=?;";
             try {
@@ -146,11 +144,7 @@ public class FXMLDocumentController implements Initializable {
                     //GET THE 'USE NAME' THAT PROVIDED BY THE USER
                     Data.username=uname;
                     
-                    alert = new Alert(AlertType.INFORMATION);
-                    alert.setTitle("Information Message");
-                    alert.setHeaderText(null);
-                    alert.setContentText("Login success!");
-                    alert.showAndWait();
+                    AlertProvider.infoAlert("Login success!");
 
                     try {//LOAD MAIN FRAME
                         
@@ -168,10 +162,7 @@ public class FXMLDocumentController implements Initializable {
                         Logger.getLogger(FXMLDocumentController.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 } else {
-                    alert = new Alert(AlertType.ERROR);
-                    alert.setHeaderText(null);
-                    alert.setContentText("Incorrect username/Password");
-                    alert.showAndWait();
+                    AlertProvider.errorAlert("Incorrect Username/Password");
                 }
             } catch (SQLException ex) {
                 Logger.getLogger(FXMLDocumentController.class.getName()).log(Level.SEVERE, null, ex);
@@ -188,21 +179,13 @@ public class FXMLDocumentController implements Initializable {
 
     public void regBtn() {
         if (reg_userName.getText().isEmpty() || reg_pwd.getText().isEmpty() || reg_quiz.getSelectionModel().getSelectedItem() == null || reg_ans.getText().isEmpty()) {
-            alert = new Alert(AlertType.ERROR);
-            alert.setTitle("Error Message");
-            alert.setHeaderText(null);
-            alert.setContentText("Please fill all the blank fields");
-            alert.showAndWait();
+            AlertProvider.errorAlert("please fill all blank fields");
         } else {
             String regData = "INSERT INTO employee(uname,password,question,answer,ddate)VALUES(?,?,?,?,?);";
             try {
 
                 if (reg_pwd.getText().length() < 8) {
-                    alert = new Alert(AlertType.ERROR);
-                    alert.setTitle("Error Message");
-                    alert.setHeaderText(null);
-                    alert.setContentText("Please provide atleast 8 charactors for password");
-                    alert.showAndWait();
+                    AlertProvider.errorAlert("Please provide atlease 8 character for the password!");
                 } else {
 
                     con = Database.connect();
@@ -214,11 +197,7 @@ public class FXMLDocumentController implements Initializable {
                     pst.setString(5, (String.valueOf(NowDate.getSqlDate())));
                     pst.executeUpdate();
 
-                    alert = new Alert(AlertType.INFORMATION);
-                    alert.setTitle("Information Message");
-                    alert.setHeaderText(null);
-                    alert.setContentText("Successfully registered Account");
-                    alert.showAndWait();
+                    AlertProvider.infoAlert("Successfully registerd account!");
 
                     reg_userName.setText("");
                     reg_pwd.setText("");
@@ -274,11 +253,7 @@ public class FXMLDocumentController implements Initializable {
         String uname = question_uname.getText();
 
         if (uname.isEmpty() || question == null || ans.isEmpty()) {
-            alert = new Alert(AlertType.ERROR);
-            alert.setTitle("Error Message");
-            alert.setHeaderText(null);
-            alert.setContentText("Please fill all blank fields");
-            alert.showAndWait();
+            AlertProvider.errorAlert("Please fill all blank fields!");
 
         } else {
             String query = "select id,question,answer,uname from employee where question=? and answer=? and uname=?;";
@@ -297,11 +272,7 @@ public class FXMLDocumentController implements Initializable {
                     //to make available retrived column's id to changePWDbtn()
                     proceedID = rs.getInt("id");
                 } else {
-                    alert = new Alert(AlertType.ERROR);
-                    alert.setTitle("Error Message");
-                    alert.setHeaderText(null);
-                    alert.setContentText("Invalid Information");
-                    alert.showAndWait();
+                    AlertProvider.errorAlert("Invalid information");
                 }
             } catch (SQLException ex) {
                 Logger.getLogger(FXMLDocumentController.class.getName()).log(Level.SEVERE, null, ex);
@@ -315,11 +286,7 @@ public class FXMLDocumentController implements Initializable {
         String confirmPWD = changePWD_confirm.getText();
 
         if (newPWD.isEmpty() || confirmPWD.isEmpty()) {
-            alert = new Alert(AlertType.ERROR);
-            alert.setTitle("Error Message");
-            alert.setHeaderText(null);
-            alert.setContentText("Please fill all blank fields");
-            alert.showAndWait();
+            AlertProvider.errorAlert("Please fill all blank fields!");
         } else {
             //check whether the new one and confirm one is equals
             if (newPWD.equals(confirmPWD)) {
@@ -334,11 +301,7 @@ public class FXMLDocumentController implements Initializable {
 
                     //print message if the query affects only on one row
                     if (updateCount == 1) {
-                        alert = new Alert(AlertType.INFORMATION);
-                        alert.setTitle("Success Message");
-                        alert.setHeaderText(null);
-                        alert.setContentText("Password is changed");
-                        alert.showAndWait();
+                        AlertProvider.infoAlert("Password is changed!");
                     }
 
                     id_loginForm.setVisible(true);
@@ -354,11 +317,7 @@ public class FXMLDocumentController implements Initializable {
                     Logger.getLogger(FXMLDocumentController.class.getName()).log(Level.SEVERE, null, ex);
                 }
             } else {
-                alert = new Alert(AlertType.ERROR);
-                alert.setTitle("Error Message");
-                alert.setHeaderText(null);
-                alert.setContentText("Passwords do not match");
-                alert.showAndWait();
+                AlertProvider.errorAlert("Password do not match!");
             }
         }
     }

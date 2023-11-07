@@ -18,9 +18,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -41,6 +43,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafxapplication1.util.AlertProvider;
 
 /**
  *
@@ -142,16 +145,16 @@ public class MainFormController implements Initializable {
     private GridPane menu_gridPane;
 
     @FXML
-    private TableView<?> menu_tableView;
+    private TableView<ProductData> menu_tableView;
 
     @FXML
-    private TableColumn<?, ?> menu_col_productName;
+    private TableColumn<ProductData, String> menu_col_productName;
 
     @FXML
-    private TableColumn<?, ?> menu_col_quantity;
+    private TableColumn<ProductData, String> menu_col_quantity;
 
     @FXML
-    private TableColumn<?, ?> menu_col_price;
+    private TableColumn<ProductData, String> menu_col_price;
 
     @FXML
     private Label menu_total;
@@ -170,6 +173,9 @@ public class MainFormController implements Initializable {
 
     @FXML
     private Button menu_receiptBtn;
+
+    @FXML
+    private AnchorPane dashboard_form;
 
     private Alert alert;
     private Connection con;
@@ -190,10 +196,7 @@ public class MainFormController implements Initializable {
                 || inventory_status == null
                 || Data.path == null) {
 
-            alert = new Alert(AlertType.ERROR);
-            alert.setHeaderText(null);
-            alert.setContentText("Please fill all blank fields");
-            alert.showAndWait();
+            AlertProvider.errorAlert("please fill all blank fields");
         } else {
             String checkProdID = "select pro_id from product where pro_id='" + inventory_productID.getText() + "'";
             try {
@@ -226,11 +229,7 @@ public class MainFormController implements Initializable {
 
                     pst.executeUpdate();
 
-                    alert = new Alert(AlertType.INFORMATION);
-                    alert.setTitle("Information Message");
-                    alert.setHeaderText(null);
-                    alert.setContentText("Successfully added!");
-                    alert.showAndWait();
+                    AlertProvider.infoAlert("Successfully added!");
 
                     inventoryShowData();
                     inventoryClearBtn();
@@ -250,10 +249,7 @@ public class MainFormController implements Initializable {
                 || inventory_status == null
                 || Data.path == null || Data.id == 0) {
 
-            alert = new Alert(AlertType.ERROR);
-            alert.setHeaderText(null);
-            alert.setContentText("Please fill all blank fields");
-            alert.showAndWait();
+            AlertProvider.errorAlert("please fill all blank fields");
         } else {
             String path = Data.path;
             path = path.replace("\\", "\\\\");
@@ -281,21 +277,13 @@ public class MainFormController implements Initializable {
                     pst = con.prepareStatement(updateQuery);
                     pst.executeUpdate();
 
-                    alert = new Alert(AlertType.INFORMATION);
-                    alert.setTitle("Information Message");
-                    alert.setHeaderText(null);
-                    alert.setContentText("Successfully updated");
-                    alert.showAndWait();
+                    AlertProvider.infoAlert("Successfully added!");
 
                     //TO REFRESH THE DATA & CLEAR THE FIELDS
                     inventoryShowData();
                     inventoryClearBtn();
                 } else {
-                    alert = new Alert(AlertType.ERROR);
-                    alert.setTitle("Error Message");
-                    alert.setHeaderText(null);
-                    alert.setContentText("Cancelled");
-                    alert.showAndWait();
+                    AlertProvider.errorAlert("cancelled");
                 }
 
             } catch (SQLException ex) {
@@ -309,10 +297,7 @@ public class MainFormController implements Initializable {
     public void inventoryDeleBtn() {
         if (inventory_productID.getText().isEmpty()) {
 
-            alert = new Alert(AlertType.ERROR);
-            alert.setHeaderText(null);
-            alert.setContentText("selct data to delete");
-            alert.showAndWait();
+            AlertProvider.errorAlert("Select data to delete");
         } else {
             alert = new Alert(AlertType.CONFIRMATION);
             alert.setHeaderText(null);
@@ -327,10 +312,7 @@ public class MainFormController implements Initializable {
                     pst = con.prepareStatement(deleteQuery);
                     pst.executeUpdate();
 
-                    alert = new Alert(AlertType.ERROR);
-                    alert.setHeaderText(null);
-                    alert.setContentText("successfully deleted!");
-                    alert.showAndWait();
+                    AlertProvider.errorAlert("successfully deleted!");
 
                     //TO REFRESH THE DATA & CLEAR THE FIELDS
                     inventoryShowData();
@@ -340,10 +322,7 @@ public class MainFormController implements Initializable {
                     Logger.getLogger(MainFormController.class.getName()).log(Level.SEVERE, null, ex);
                 }
             } else {
-                alert = new Alert(AlertType.ERROR);
-                alert.setHeaderText(null);
-                alert.setContentText("cancelled!");
-                alert.showAndWait();
+                AlertProvider.errorAlert("cancelled");
             }
         }
     }
@@ -473,7 +452,15 @@ public class MainFormController implements Initializable {
 
             ProductData prod;
             while (rs.next()) {
-                prod = new ProductData(rs.getInt("id"), rs.getString("pro_id"), rs.getString("pro_name"), rs.getDouble("price"), rs.getString("image"));
+                prod = new ProductData(rs.getInt("id"),
+                        rs.getString("pro_id"),
+                        rs.getString("pro_name"),
+                        rs.getString("type"),
+                        rs.getInt("stock"),
+                        rs.getDouble("price"),
+                        rs.getString("status"),
+                        rs.getString("image"),
+                        rs.getDate("date"));
                 listData.add(prod);
             }
 
@@ -490,9 +477,10 @@ public class MainFormController implements Initializable {
         int row = 0;
         int column = 0;
 
+        menu_gridPane.getChildren().clear();
         menu_gridPane.getRowConstraints().clear();
         menu_gridPane.getColumnConstraints().clear();
-        
+
         for (int a = 0; a < cardListData.size(); a++) {
             FXMLLoader load = new FXMLLoader();
             load.setLocation(getClass().getResource("CardProduct.fxml"));
@@ -506,11 +494,129 @@ public class MainFormController implements Initializable {
                     row += 1;
                 }
                 menu_gridPane.add(pane, column++, row);
-                
+                GridPane.setMargin(pane, new Insets(10));
+
             } catch (IOException ex) {
                 Logger.getLogger(MainFormController.class.getName()).log(Level.SEVERE, null, ex);
             }
 
+        }
+    }
+
+    public ObservableList<ProductData> menuDislaOrder() {//RETURN CUSTOMMER SPESIFIC OBJECT
+        ObservableList<ProductData> listData = FXCollections.observableArrayList();
+        String sql = "select * from customer";
+        try {
+            con = Database.connect();
+            pst = con.prepareStatement(sql);
+            rs = pst.executeQuery();
+
+            ProductData prod;
+
+            while (rs.next()) {
+                prod = new ProductData(rs.getInt("id"),
+                        rs.getString("prod_id"),
+                        rs.getString("prod_name"),
+                        rs.getString("type"),
+                        rs.getInt("quantity"),
+                        rs.getDouble("price"),
+                        rs.getString("image"),
+                        rs.getDate("date"));
+                listData.add(prod);
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(MainFormController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return listData;
+    }
+
+    private double totalPrice;
+    public void menuDisplayTotal()
+    {
+        customerID();
+        String totoal="select sum(price) from customer where customer_id="+cID;
+         try {
+            con = Database.connect();
+            pst = con.prepareStatement(totoal);
+            rs = pst.executeQuery();
+            if(rs.next()) {
+                totalPrice= rs.getInt("sum(price)");
+            }
+            menu_total.setText("$"+totalPrice);
+         }catch(Exception e)
+         {
+            e.printStackTrace();
+         }
+    }
+    
+    private ObservableList<ProductData> menuListData;
+    public void menuShowData()//SHOW DATA ON --> MENU BTN-->menu_tableView
+    {
+       menuListData= menuDislaOrder();//ASSIGN CUSTOMMER SPESIFIC OBJECT TO "menuListData" VARABLE
+       menu_col_productName.setCellValueFactory(new PropertyValueFactory<>("pro_name"));
+       menu_col_quantity.setCellValueFactory(new PropertyValueFactory<>("quantity"));
+       menu_col_price.setCellValueFactory(new PropertyValueFactory<>("price"));
+       
+       menu_tableView.setItems(cardListData);
+    }
+    
+    private int cID;
+
+    //FETCH THE MAX "customer_id" VALUE FROM THE "customer" TABLE & ASSIGN CUSTOMER ID TO "Data" CLASS CUSOMER ID
+    public void customerID() {
+        String sql = "select max(customer_id) from customer";
+        try {
+            con = Database.connect();
+            pst = con.prepareStatement(sql);
+            rs = pst.executeQuery();
+            if (rs.next()) {
+                cID = rs.getInt("max(customer_id)");
+            }
+
+            String query = "select max(customer_id) from receipt";
+            pst = con.prepareStatement(query);
+            rs = pst.executeQuery();
+
+            int rID = 0;
+            if (rs.next()) {
+                rID = rs.getInt("max(customer_id)");
+            }
+
+            if (cID == 0) {
+                cID += 1;
+            } else if (cID == rID) {
+                cID += 1;
+            }
+
+            Data.cID = cID;
+
+        } catch (SQLException ex) {
+            Logger.getLogger(MainFormController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void switchForm(ActionEvent event) {
+        if (event.getSource() == dashboard_btn) {
+            dashboard_form.setVisible(true);
+            inventory_form.setVisible(false);
+            menu_form.setVisible(false);
+
+        } else if (event.getSource() == inventory_btn) {
+            dashboard_form.setVisible(false);
+            inventory_form.setVisible(true);
+            menu_form.setVisible(false);
+            inventoryTypeLis();
+            inventoryStatusLis();
+            inventoryShowData();
+
+        } else if (event.getSource() == menu_btn) {//WHENEVER MENU BTN CLICKED BELOW CODES WILL EXECUTE
+            dashboard_form.setVisible(false);
+            inventory_form.setVisible(false);
+            menu_form.setVisible(true);
+            
+            menuDisplayCard();
+            menuDislaOrder();
+            menuDisplayTotal();
         }
     }
 
@@ -550,12 +656,14 @@ public class MainFormController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         displayUsereName();
-        
+
         inventoryTypeLis();
         inventoryStatusLis();
         inventoryShowData();
-        
+
         menuDisplayCard();
+        menuDislaOrder();
+        menuDisplayTotal();
     }
 
 }
