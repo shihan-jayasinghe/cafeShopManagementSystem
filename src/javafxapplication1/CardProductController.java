@@ -50,6 +50,7 @@ public class CardProductController implements Initializable {
     private String type;
     private String prod_image;
     private String prod_date;
+    private double totalPrice;
 
     private Connection con;
     private ResultSet rs;
@@ -129,7 +130,7 @@ public class CardProductController implements Initializable {
                 if ((check.equals("Unavailable")) || checkSTK < qty) {
                     AlertProvider.errorAlert("Out of stock!");
                 } else {
-                     prod_image = prod_image.replace("\\", "\\\\");
+                    prod_image = prod_image.replace("\\", "\\\\");
                     String insertData = "insert into customer(customer_id,prod_id,prod_name,type,quantity,price,image,date,em_username)"
                             + " values(?,?,?,?,?,?,?,?,?);";
                     pst = con.prepareStatement(insertData);
@@ -148,7 +149,7 @@ public class CardProductController implements Initializable {
                     pst.executeUpdate();
 
                     int upStock = (checkSTK - qty);
-                   
+
                     String updateStock = "update product set pro_name='" + prod_name.getText() + "',"
                             + "type = '" + type + "',"
                             + "stock = " + upStock + ","
@@ -161,6 +162,8 @@ public class CardProductController implements Initializable {
                     pst.executeUpdate();
 
                     AlertProvider.infoAlert("Successfully added!");
+
+                    mForm.customerID();
                 }
 
             }

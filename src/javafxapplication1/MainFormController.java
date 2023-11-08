@@ -2,6 +2,7 @@ package javafxapplication1;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -44,6 +45,7 @@ import javafx.scene.layout.GridPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafxapplication1.util.AlertProvider;
+import javafxapplication1.util.NowDate;
 
 /**
  *
@@ -266,11 +268,7 @@ public class MainFormController implements Initializable {
             updateQuery += "where id=" + Data.id + ";";
 
             try {
-                alert = new Alert(AlertType.CONFIRMATION);
-                alert.setTitle("Error Message");
-                alert.setHeaderText(null);
-                alert.setContentText("Are you sure you want to update Product ID: " + inventory_productID.getText() + "?");
-                Optional<ButtonType> option = alert.showAndWait();
+                Optional<ButtonType> option = AlertProvider.confirmAlert("Are you sure you want to update Product ID: " + inventory_productID.getText() + "?");
 
                 if (option.get().equals(ButtonType.OK)) {
                     con = Database.connect();
@@ -505,7 +503,8 @@ public class MainFormController implements Initializable {
 
     public ObservableList<ProductData> menuDislaOrder() {//RETURN CUSTOMMER SPESIFIC OBJECT
         ObservableList<ProductData> listData = FXCollections.observableArrayList();
-        String sql = "select * from customer";
+        customerID();
+        String sql = "select * from customer where customer_id=" + cID;
         try {
             con = Database.connect();
             pst = con.prepareStatement(sql);
@@ -531,35 +530,138 @@ public class MainFormController implements Initializable {
     }
 
     private double totalPrice;
-    public void menuDisplayTotal()
-    {
+
+    public void menuDisplayTotal() {
         customerID();
-        String totoal="select sum(price) from customer where customer_id="+cID;
-         try {
+        String totoal = "select sum(price) from customer where customer_id=" + cID;
+        try {
             con = Database.connect();
             pst = con.prepareStatement(totoal);
             rs = pst.executeQuery();
-            if(rs.next()) {
-                totalPrice= rs.getInt("sum(price)");
+            if (rs.next()) {
+                totalPrice = rs.getInt("sum(price)");
+                menu_total.setText("$" + totalPrice);
             }
-            menu_total.setText("$"+totalPrice);
-         }catch(Exception e)
-         {
+        } catch (Exception e) {
             e.printStackTrace();
-         }
+        }
     }
-    
+
     private ObservableList<ProductData> menuListData;
-    public void menuShowData()//SHOW DATA ON --> MENU BTN-->menu_tableView
+
+    public void menuShowOrderData()//SHOW DATA ON --> MENU BTN-->menu_tableView
     {
-       menuListData= menuDislaOrder();//ASSIGN CUSTOMMER SPESIFIC OBJECT TO "menuListData" VARABLE
-       menu_col_productName.setCellValueFactory(new PropertyValueFactory<>("pro_name"));
-       menu_col_quantity.setCellValueFactory(new PropertyValueFactory<>("quantity"));
-       menu_col_price.setCellValueFactory(new PropertyValueFactory<>("price"));
-       
-       menu_tableView.setItems(cardListData);
+        menuListData = menuDislaOrder();//ASSIGN CUSTOMMER SPESIFIC OBJECT TO "menuListData" VARABLE
+        menu_col_productName.setCellValueFactory(new PropertyValueFactory<>("pro_name"));
+        menu_col_quantity.setCellValueFactory(new PropertyValueFactory<>("quantity"));
+        menu_col_price.setCellValueFactory(new PropertyValueFactory<>("price"));
+
+        menu_tableView.setItems(menuListData);
     }
-    
+
+    private int getid;
+
+    public void menuSelectOrder() {
+        ProductData prod = menu_tableView.getSelectionModel().getSelectedItem();
+        int num = menu_tableView.getSelectionModel().getFocusedIndex();
+        if ((num - 1) < -1) {
+            return;
+        }
+        getid = prod.getId();
+    }
+
+    private double amount;
+    private double change;
+
+    public void menuAnount() {
+        menuDisplayTotal();
+        if (menu_amount.getText().isEmpty() || totalPrice == 0) {
+            AlertProvider.errorAlert("Invalid!");
+            menu_change.setText("$0.0");
+        } else {
+            amount = Double.parseDouble(menu_amount.getText());
+
+            if (amount < totalPrice) {
+                menu_amount.setText("");
+                menu_change.setText("$0.0");
+            } else {
+                change = (amount - totalPrice);
+                menu_change.setText("$" + change);
+            }
+        }
+    }
+
+    public void menuPayBtn() {
+        menuAnount();
+        if (totalPrice == 0) {
+            AlertProvider.errorAlert("Please choose your order first!");
+        } else {
+            menuDisplayTotal();
+            String insertPay = "insert into receipt(customer_id,total,date,em_username)"
+                    + "values(?,?,?,?)";
+
+            try {
+
+                if (amount < totalPrice) {
+                    AlertProvider.errorAlert("Not enugh money to cmpete the order");
+
+                } else {
+                    con = Database.connect();
+                    Optional<ButtonType> option = AlertProvider.confirmAlert("Confirem payment?");
+                    if (option.get().equals(ButtonType.OK)) {
+                        customerID();
+                        menuDisplayTotal();
+                        pst = con.prepareStatement(insertPay);
+                        pst.setString(1, String.valueOf(cID));
+                        pst.setString(2, String.valueOf(totalPrice));
+                        pst.setString(3, String.valueOf(NowDate.getSqlDate()));
+                        pst.setString(4, Data.username);
+                        pst.executeUpdate();
+
+                        AlertProvider.infoAlert("Confirmed!");
+
+                        paymentReset();
+
+                        menuShowOrderData();
+                    } else {
+                        AlertProvider.warningAlert("Cancelled");
+                    }
+                }
+
+            } catch (SQLException ex) {
+                Logger.getLogger(MainFormController.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
+
+    public void menuRemoveBtn() {
+        if (getid == 0) {
+            AlertProvider.errorAlert("Please select the order that you want to remove");
+        } else {
+            String deleteData = "delete from customer where id=" + getid;
+            try {
+                Optional<ButtonType> option = AlertProvider.confirmAlert("Are you shure you wan to delete this order?");
+                if (option.get().equals(ButtonType.OK)) {
+                    con = Database.connect();
+                    pst = con.prepareStatement(deleteData);
+                    pst.executeUpdate();
+                    menuShowOrderData();
+                }
+
+            } catch (SQLException ex) {
+                Logger.getLogger(MainFormController.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
+
+    public void paymentReset() {
+        totalPrice = 0;
+        change = 0;
+        menu_amount.setText("$0.0");
+        menu_change.setText("$0.0");
+        menu_total.setText("$0.0");
+    }
+
     private int cID;
 
     //FETCH THE MAX "customer_id" VALUE FROM THE "customer" TABLE & ASSIGN CUSTOMER ID TO "Data" CLASS CUSOMER ID
@@ -613,10 +715,11 @@ public class MainFormController implements Initializable {
             dashboard_form.setVisible(false);
             inventory_form.setVisible(false);
             menu_form.setVisible(true);
-            
+
             menuDisplayCard();
             menuDislaOrder();
             menuDisplayTotal();
+            menuShowOrderData();
         }
     }
 
@@ -664,6 +767,7 @@ public class MainFormController implements Initializable {
         menuDisplayCard();
         menuDislaOrder();
         menuDisplayTotal();
+        menuShowOrderData();
     }
 
 }
