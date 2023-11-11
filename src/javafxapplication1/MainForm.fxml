@@ -46,7 +46,7 @@
                                     <Font name="System Bold" size="15.0" />
                                  </font>
                               </Label>
-                              <Label fx:id="username" layoutX="89.0" layoutY="97.0" text="MarcoMan" textFill="WHITE">
+                              <Label fx:id="username" layoutX="89.0" layoutY="97.0" text="Java Cafe" textFill="WHITE">
                                  <font>
                                     <Font name="System Bold" size="15.0" />
                                  </font>
